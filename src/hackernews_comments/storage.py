@@ -67,7 +67,7 @@ class Storage:
 
         for date_str, group in grouped.items():
             filepath = self.markdown_dir / f"{date_str}.md"
-            with open(filepath, "a") as f:
+            with open(filepath, "a", encoding="utf-8") as f:
                 for c in group:
                     pid = c.parent_id if c.parent_id is not None else ""
                     sid = c.story_id if c.story_id is not None else ""
