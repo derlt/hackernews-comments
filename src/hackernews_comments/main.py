@@ -56,8 +56,16 @@ def main() -> None:
 
     max_ts = storage.get_max_timestamp()
     if max_ts is not None and max_ts > start_ts:
-        start_ts = max_ts
-        logger.info("resuming from timestamp %s", start_ts)
+        day_start = int(
+            datetime.fromtimestamp(max_ts, tz=timezone.utc)
+            .replace(hour=0, minute=0, second=0, microsecond=0)
+            .timestamp()
+        )
+        if end_ts is not None and day_start >= end_ts:
+            logger.info("all data already fetched")
+            return
+        start_ts = day_start
+        logger.info("resuming from day-start timestamp %s", start_ts)
 
     total = 0
     try:

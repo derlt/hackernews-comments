@@ -1,11 +1,13 @@
 import time
 from collections.abc import Iterator
+from datetime import datetime, timezone
 
 import httpx
 
 from .models import HNComment
 
 BASE_URL = "https://hn.algolia.com/api/v1/search_by_date"
+CHUNK_SIZE = 3600
 
 
 def fetch_comments(
@@ -13,35 +15,47 @@ def fetch_comments(
     end_ts: int | None = None,
     rate_limit: float = 1.0,
 ) -> Iterator[list[HNComment]]:
-    params: dict = {
-        "tags": "comment",
-        "numericFilters": f"created_at_i>{start_ts}",
-        "hitsPerPage": 1000,
-    }
-    if end_ts is not None:
-        params["numericFilters"] += f",created_at_i<{end_ts}"
+    if end_ts is None:
+        end_ts = int(datetime.now(timezone.utc).timestamp())
 
-    page = 0
     client = httpx.Client(timeout=30.0)
 
     try:
-        while True:
-            params["page"] = page
-            resp = _request_with_retry(client, params)
-            data = resp.json()
-            hits = data.get("hits", [])
-            nb_pages = data.get("nbPages", 0)
+        chunk_start = start_ts
+        while chunk_start < end_ts:
+            chunk_end = min(chunk_start + CHUNK_SIZE, end_ts)
 
-            if not hits:
-                break
+            page = 0
+            while True:
+                params = {
+                    "tags": "comment",
+                    "numericFilters": (
+                        f"created_at_i>{chunk_start},created_at_i<{chunk_end}"
+                    ),
+                    "hitsPerPage": 1000,
+                    "page": page,
+                }
 
-            yield [parse_hit(h) for h in hits]
+                resp = _request_with_retry(client, params)
+                data = resp.json()
+                hits = data.get("hits", [])
+                nb_pages = data.get("nbPages", 0)
 
-            page += 1
-            if page >= nb_pages:
-                break
+                if not hits:
+                    break
 
-            if rate_limit > 0:
+                yield [parse_hit(h) for h in hits]
+
+                page += 1
+                if page >= nb_pages:
+                    break
+
+                if rate_limit > 0:
+                    time.sleep(1.0 / rate_limit)
+
+            chunk_start = chunk_end
+
+            if rate_limit > 0 and chunk_start < end_ts:
                 time.sleep(1.0 / rate_limit)
     finally:
         client.close()
