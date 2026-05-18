@@ -1,6 +1,6 @@
 import argparse
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from .api import fetch_comments
@@ -49,7 +49,7 @@ def main() -> None:
         end_dt = datetime.strptime(args.end_date, "%Y-%m-%d").replace(
             tzinfo=timezone.utc
         )
-        end_ts = int(end_dt.timestamp()) + 86399
+        end_ts = int((end_dt + timedelta(days=1)).timestamp())
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     storage = Storage(args.output_dir, args.db_name)

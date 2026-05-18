@@ -40,7 +40,7 @@ src/hackernews_comments/
 2. Check SQLite for latest `created_at_i` — resume from there to avoid
    re-downloading already-saved data.
 3. Call Algolia `search_by_date` API (`tags=comment`,
-   `numericFilters=created_at_i>=...`), paginate 1000 hits per page.
+    `numericFilters=created_at_i>...`), paginate 1000 hits per page.
 4. Each batch of up to 1000 comments is saved to SQLite (`INSERT OR IGNORE`
    for idempotency) and appended to the correct
    `markdown/YYYY-MM-DD.md` file.

@@ -15,11 +15,11 @@ def fetch_comments(
 ) -> Iterator[list[HNComment]]:
     params: dict = {
         "tags": "comment",
-        "numericFilters": f"created_at_i>={start_ts}",
+        "numericFilters": f"created_at_i>{start_ts}",
         "hitsPerPage": 1000,
     }
     if end_ts is not None:
-        params["numericFilters"] += f",created_at_i<={end_ts}"
+        params["numericFilters"] += f",created_at_i<{end_ts}"
 
     page = 0
     client = httpx.Client(timeout=30.0)
