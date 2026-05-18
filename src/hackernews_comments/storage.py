@@ -69,11 +69,7 @@ class Storage:
             filepath = self.markdown_dir / f"{date_str}.md"
             with open(filepath, "a", encoding="utf-8") as f:
                 for c in group:
-                    pid = c.parent_id if c.parent_id is not None else ""
-                    sid = c.story_id if c.story_id is not None else ""
-                    f.write(
-                        f"{c.id} {c.author} {c.created_at} p={pid} s={sid} {c.url}\n"
-                    )
+                    f.write(f"{c.id}\n")
                     f.write(f"{c.text or ''}\n\n")
 
     def get_max_timestamp(self) -> int | None:
