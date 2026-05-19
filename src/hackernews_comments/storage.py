@@ -1,8 +1,29 @@
+import html
+import re
 import sqlite3
 from collections import defaultdict
 from pathlib import Path
 
 from .models import HNComment
+
+_BLOCK_TAGS = re.compile(
+    r"</?(?:p|div|blockquote|pre|tr|li|ul|ol|h[1-6]|table|thead|tbody|tfoot|hr)[^>]*>",
+    re.IGNORECASE,
+)
+_BREAK_TAGS = re.compile(r"<br\s*/?>", re.IGNORECASE)
+_HEAD_TAGS = re.compile(r"<(script|style|head|noscript)[^>]*>.*?</\1>", re.IGNORECASE | re.DOTALL)
+_TAG = re.compile(r"<[^>]+>")
+
+
+def _html_to_text(raw: str) -> str:
+    text = _HEAD_TAGS.sub("", raw)
+    text = _BLOCK_TAGS.sub("\n", text)
+    text = _BREAK_TAGS.sub("\n", text)
+    text = _TAG.sub("", text)
+    text = html.unescape(text)
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
 
 
 class Storage:
@@ -70,7 +91,8 @@ class Storage:
             with open(filepath, "a", encoding="utf-8") as f:
                 for c in group:
                     f.write(f"{c.id}\n")
-                    f.write(f"{c.text or ''}\n\n")
+                    text = _html_to_text(c.text or "")
+                    f.write(f"{text}\n\n")
 
     def get_max_timestamp(self) -> int | None:
         cursor = self.conn.execute("SELECT MAX(created_at_i) FROM comments")
