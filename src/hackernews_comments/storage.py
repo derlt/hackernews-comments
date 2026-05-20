@@ -90,7 +90,14 @@ class Storage:
             filepath = self.markdown_dir / f"{date_str}.md"
             with open(filepath, "a", encoding="utf-8") as f:
                 for c in group:
-                    f.write(f"{c.id}\n")
+                    author = c.author or "[deleted]"
+                    f.write(
+                        f"## {c.id} | {author} | {c.created_at[:10]} | story:{c.story_id}\n"
+                    )
+                    if c.parent_id != c.story_id:
+                        f.write(f"> parent: {c.parent_id}\n\n")
+                    else:
+                        f.write("\n")
                     text = _html_to_text(c.text or "")
                     f.write(f"{text}\n\n")
 
