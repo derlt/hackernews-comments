@@ -13,4 +13,4 @@ wheels/
 *.db
 
 # Auto-generated comment markdown
-hn_data/markdown/
+hn_data/
